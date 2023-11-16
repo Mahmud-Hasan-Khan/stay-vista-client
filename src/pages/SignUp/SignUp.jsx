@@ -1,7 +1,77 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { FcGoogle } from 'react-icons/fc'
+import { imageUpload } from '../../api/utils';
+import useAuth from '../../hooks/useAuth';
+import { getToken, saveUser } from '../../api/auth';
+import { toast } from 'react-hot-toast';
+import { ImSpinner9 } from "react-icons/im";
 
 const SignUp = () => {
+
+  const { loading, createUser, signInWithGoogle, updateUserProfile } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignUp = async (e) => {
+    e.preventDefault();
+
+    const form = e.target;
+    const name = form.name.value;
+    const email = form.email.value;
+    const password = form.password.value;
+    const userImage = form.image.files[0];
+
+    try {
+      // image upload
+      const imageData = await imageUpload(userImage);
+
+      // create new user
+      const result = await createUser(email, password)
+      console.log(result);
+
+
+      // save userName&email and profile picture
+      await updateUserProfile(name, imageData?.data?.display_url)
+      console.log(result);
+
+      // save user data in mongoDB database
+      const dbResponse = await saveUser(result?.user)
+      console.log(dbResponse);
+
+      // get token
+      await getToken(result?.user.email)
+      navigate('/');
+      //toast
+      toast.success('SignUp Successful')
+
+
+    } catch (error) {
+      // console.log(error);
+      toast.error(error?.message)
+    }
+  }
+  const handleGoogleSignIn = async () => {
+
+    try {
+      // create new user
+      const result = await signInWithGoogle()
+      console.log(result);
+
+      // save user data in mongoDB database
+      const dbResponse = await saveUser(result?.user)
+      console.log(dbResponse);
+
+      // get token
+      await getToken(result?.user.email)
+      navigate('/');
+      //toast
+      toast.success('SignUp Successful')
+
+    } catch (error) {
+      // console.log(error);
+      toast.error(error?.message)
+    }
+  }
+
   return (
     <div className='flex justify-center items-center min-h-screen'>
       <div className='flex flex-col max-w-md p-6 rounded-md sm:p-10 bg-gray-100 text-gray-900'>
@@ -9,7 +79,7 @@ const SignUp = () => {
           <h1 className='my-3 text-4xl font-bold'>Sign Up</h1>
           <p className='text-sm text-gray-400'>Welcome to StayVista</p>
         </div>
-        <form
+        <form onSubmit={handleSignUp}
           noValidate=''
           action=''
           className='space-y-6 ng-untouched ng-pristine ng-valid'
@@ -77,10 +147,11 @@ const SignUp = () => {
               type='submit'
               className='bg-rose-500 w-full rounded-md py-3 text-white'
             >
-              Continue
+              {loading ? <ImSpinner9 className='animate-spin mx-auto text-base' /> : 'Continue'}
             </button>
           </div>
         </form>
+
         <div className='flex items-center pt-4 space-x-1'>
           <div className='flex-1 h-px sm:w-16 dark:bg-gray-700'></div>
           <p className='px-3 text-sm dark:text-gray-400'>
@@ -88,11 +159,13 @@ const SignUp = () => {
           </p>
           <div className='flex-1 h-px sm:w-16 dark:bg-gray-700'></div>
         </div>
-        <div className='flex justify-center items-center space-x-2 border m-3 p-2 border-gray-300 border-rounded cursor-pointer'>
+
+        <div onClick={handleGoogleSignIn} className='flex justify-center items-center space-x-2 border m-3 p-2 border-gray-300 border-rounded cursor-pointer'>
           <FcGoogle size={32} />
 
           <p>Continue with Google</p>
         </div>
+
         <p className='px-6 text-sm text-center text-gray-400'>
           Already have an account?{' '}
           <Link
