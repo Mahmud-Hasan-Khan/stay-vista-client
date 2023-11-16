@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { FcGoogle } from 'react-icons/fc'
 import useAuth from '../../hooks/useAuth';
 import { getToken, saveUser } from '../../api/auth';
@@ -9,6 +9,7 @@ const Login = () => {
 
   const { loading, signIn, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -25,7 +26,7 @@ const Login = () => {
 
       // get token
       await getToken(result?.user.email)
-      navigate('/');
+      navigate(location?.state ? location?.state : "/")
       //toast
       toast.success('SignIn Successful')
 
@@ -48,7 +49,7 @@ const Login = () => {
 
       // get token
       await getToken(result?.user.email)
-      navigate('/');
+      navigate(location?.state ? location?.state : "/")
       //toast
       toast.success('SignIn Successful')
 
